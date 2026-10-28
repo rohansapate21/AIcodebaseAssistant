@@ -1,119 +1,284 @@
 # AI Codebase Assistant
 
-A full-stack RAG (Retrieval-Augmented Generation) application that indexes public GitHub repositories and answers natural-language questions about the code — with citations linking back to the exact file and line number.
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-18+-68a063?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/TypeScript-5.0+-3178c6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/React-18+-61dafb?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/Vite-6.0+-646cff?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/MongoDB_Atlas-Vector_Search-47a248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB Atlas" />
+  <img src="https://img.shields.io/badge/Google_Gemini-2.0_Flash-4285f4?style=for-the-badge&logo=google&logoColor=white" alt="Gemini" />
+  <img src="https://img.shields.io/badge/Vitest-Passing_(49_tests)-729b1b?style=for-the-badge&logo=vitest&logoColor=white" alt="Vitest" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License MIT" />
+</p>
 
-## Demo
+An intelligent, full-stack **Retrieval-Augmented Generation (RAG)** application that indexes public GitHub repositories and answers technical questions about the codebase — complete with precise file and line-range citations back to the source on GitHub.
 
-> _Screenshot / GIF will be added after Phase 9 (Frontend) is complete._
+---
 
-## Features
+## 🌟 Key Features
 
-- 🔍 **Semantic code search** — find relevant code even when you don't know exact function names
-- 📚 **Source citations** — every answer links directly to the GitHub file and line range
-- 🔄 **Smart chunking** — function/class-boundary-aware splitting for higher retrieval quality
-- ⚡ **Hash-based dedup** — unchanged files are never re-embedded on re-index
-- 🛡️ **Prompt injection guard** — retrieved code treated as untrusted data
+- 🔍 **Semantic Code Search** — Ask natural-language questions (e.g., *"How is user authentication implemented?"* or *"Where does data validation happen?"*) and retrieve relevant code chunks even when you don't know the exact identifiers.
+- 🎯 **Line-Accurate Citations** — Every generated answer includes clickable citations detailing the exact file path and line numbers, directly linking to GitHub.
+- 🧩 **Language-Aware Chunking** — Employs function- and class-boundary detection (with graceful fallback to sliding-window chunks) so code context remains coherent and meaningful.
+- ⚡ **Hash-Based Deduplication** — Calculates content hashes for each chunk to ensure unchanged files are never re-embedded on repeat index operations.
+- 🛡️ **Prompt Injection Guardrails** — Retrieved code chunks are isolated and treated as untrusted context, preventing injected instructions in user repositories from overriding system prompts.
+- 🏗️ **Repository Architecture Summaries** — Automatically inspects codebases upon ingestion to present tech stack badges, key modules, and recommended starter questions.
+- 💬 **Interactive Chat & History** — Sleek dark-mode interface with Markdown rendering, syntax highlighting, one-click code copying, and conversation session persistence.
 
-## Architecture
+---
+
+## 🏛️ System Architecture
 
 ```mermaid
 flowchart LR
-  UI[React Chat UI] -->|POST /repos| IR[Ingest Router] --> ING[Ingestion Service]
-  ING -->|fetch files| GH[GitHub REST API]
-  ING --> CHK[Chunker] --> EMB[Embedder]
-  EMB -->|embed| EMAPI[Gemini Embeddings]
-  EMB -->|store| MDB[(MongoDB Atlas + Vector Search)]
-  UI -->|POST /query| QR[Query Router] --> RET[Retrieval Service]
-  RET -->|embed query| EMAPI
-  RET -->|vector search| MDB
-  RET --> GEN[Generation Service]
-  GEN -->|prompt + context| LLMAPI[Gemini Flash]
-  GEN -->|answer + citations| UI
+  subgraph Frontend [React + Vite UI]
+    UI[Chat & Dashboard Interface]
+  end
+
+  subgraph Backend [Express + TypeScript API]
+    IR[Ingestion Router]
+    ING[Ingestion Service]
+    CHK[Boundary Chunker]
+    EMB[Embedder Service]
+    QR[Query Router]
+    RET[Retrieval Service]
+    GEN[Generation Service]
+  end
+
+  subgraph External [External Services]
+    GH[GitHub REST API]
+    GEM_EMB[Gemini text-embedding-004]
+    MDB[(MongoDB Atlas + Vector Search)]
+    GEM_LLM[Gemini 2.0 Flash]
+  end
+
+  UI -->|POST /api/repos| IR
+  IR --> ING
+  ING -->|1. Fetch Files| GH
+  ING -->|2. Split Code| CHK
+  CHK -->|3. Chunks| EMB
+  EMB -->|4. Generate Vectors| GEM_EMB
+  EMB -->|5. Upsert Chunks| MDB
+
+  UI -->|POST /api/query| QR
+  QR --> RET
+  RET -->|1. Embed Question| GEM_EMB
+  RET -->|2. $vectorSearch + repoId filter| MDB
+  RET -->|3. Top Chunks| GEN
+  GEN -->|4. Grounded Prompt| GEM_LLM
+  GEN -->|5. Answer + Citations| UI
 ```
 
-## Tech Stack
+---
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React + TypeScript + Vite + Tailwind CSS |
-| Backend | Node.js + Express + TypeScript |
-| LLM | Gemini 2.0 Flash |
-| Embeddings | text-embedding-004 (768 dims) |
-| Vector DB | MongoDB Atlas Vector Search |
-| Repo source | GitHub REST API |
-| Testing | Vitest + Supertest |
-| Deployment | Render (backend) + Vercel (frontend) |
+## 🛠️ Tech Stack
 
-## Setup
+| Layer | Technology | Details |
+| --- | --- | --- |
+| **Frontend** | React 18, TypeScript, Vite, Tailwind CSS | Lucide icons, Prism syntax highlighting, React Markdown |
+| **Backend** | Node.js, Express, TypeScript | REST API, Winston logging, async pipeline orchestration |
+| **LLM** | Google Gemini 2.0 Flash (`@google/genai`) | Low-latency response generation with source grounding |
+| **Embeddings** | Google `text-embedding-004` | 768-dimensional dense vector embeddings |
+| **Vector Database** | MongoDB Atlas Vector Search | `$vectorSearch` with cosine similarity and tenant `repoId` filtering |
+| **Source Ingestion** | GitHub REST API | Octokit-compatible file tree extraction, blob fetching, SHA tracking |
+| **Testing** | Vitest, Supertest | 49 unit and integration tests |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- MongoDB Atlas account (free M0 cluster)
-- Gemini API key ([get one here](https://aistudio.google.com/app/apikey))
-- GitHub Personal Access Token (optional, recommended)
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [MongoDB Atlas](https://www.mongodb.com/atlas) account (Free M0 cluster is sufficient)
+- [Google Gemini API Key](https://aistudio.google.com/app/apikey)
+- [GitHub Personal Access Token](https://github.com/settings/tokens) *(optional, but recommended to avoid rate limits)*
 
-### Installation
+### 1. Clone Repository
 
 ```bash
-# Clone the repo
-git clone https://github.com/your-username/ai-codebase-assistant.git
-cd ai-codebase-assistant
-
-# Install root dependencies
-npm install
-
-# Install client dependencies
-cd client && npm install && cd ..
-
-# Install server dependencies
-cd server && npm install && cd ..
+git clone https://github.com/your-username/AIcodebaseAssistant.git
+cd AIcodebaseAssistant
 ```
 
-### Environment Variables
+### 2. Install Dependencies
+
+You can install root, client, and server dependencies in one command:
+
+```bash
+npm run install:all
+```
+
+*(Or individually run `npm install` inside the root, `client/`, and `server/` directories).*
+
+### 3. Environment Configuration
+
+Create a `.env` file in the project root:
 
 ```bash
 cp .env.example .env
-# Edit .env with your actual keys
 ```
 
-### Running Locally
+Configure the following variables in `.env`:
+
+```env
+# MongoDB Atlas connection string
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/codebase-assistant?retryWrites=true&w=majority
+
+# Gemini API key (https://aistudio.google.com/app/apikey)
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# GitHub Personal Access Token (optional but raises rate limit from 60 to 5000 req/hr)
+GITHUB_TOKEN=your_github_token_here
+
+# Server Port
+PORT=3001
+
+# Allowed Client Origin (CORS)
+CLIENT_URL=http://localhost:5173
+```
+
+*(Optional) Configure `client/.env.local` if your backend runs on a custom URL:*
+```env
+VITE_API_URL=http://localhost:3001
+```
+
+---
+
+## 🍃 MongoDB Atlas Vector Search Index Setup
+
+For semantic search to function, you need to create a Vector Search Index on the `chunks` collection in your MongoDB Atlas cluster.
+
+1. Navigate to **Atlas UI** → **Browse Collections** → select `codebase-assistant` database → `chunks` collection.
+2. Go to the **Atlas Search** or **Vector Search** tab and click **Create Search Index**.
+3. Choose the **JSON Editor** and name the index:
+   ```text
+   embedding_index
+   ```
+4. Paste the following configuration:
+
+```json
+{
+  "fields": [
+    {
+      "type": "vector",
+      "path": "embedding",
+      "numDimensions": 768,
+      "similarity": "cosine"
+    },
+    {
+      "type": "filter",
+      "path": "repoId"
+    }
+  ]
+}
+```
+5. Click **Next** and **Create Vector Search Index**. The index will become active in 1–2 minutes.
+
+---
+
+## 💻 Running the Application
+
+### Development Mode
+
+Run both the frontend and backend concurrently from the project root:
 
 ```bash
-# From the root — starts both client and server concurrently
 npm run dev
-
-# Or individually:
-cd server && npm run dev   # http://localhost:3001
-cd client && npm run dev   # http://localhost:5173
 ```
 
-## Deployment
+- **Frontend Client**: [http://localhost:5173](http://localhost:5173)
+- **Backend API**: [http://localhost:3001](http://localhost:3001)
 
-- **Backend** → [Render](https://render.com) (free Web Service, root: `server`)
-- **Frontend** → [Vercel](https://vercel.com) (free, root: `client`)
-- **Database** → MongoDB Atlas M0 (free, 512 MB)
+Or run them individually in separate terminals:
 
-## How It Works (RAG Pipeline)
+```bash
+# Server terminal
+npm run dev:server
 
-1. **Ingest** — User submits a GitHub repo URL
-2. **Fetch** — GitHub REST API returns the file tree and content
-3. **Filter** — Binary files, build dirs, and files > 100 KB are skipped
-4. **Chunk** — Files are split at function/class boundaries (fallback: 60-line sliding window)
-5. **Embed** — Each chunk is embedded with `text-embedding-004` (768-dim vector)
-6. **Store** — Vectors + metadata saved to MongoDB Atlas
-7. **Query** — User asks a question; question is embedded and used for vector search
-8. **Retrieve** — Top-5 most semantically similar chunks are retrieved (filtered by repoId)
-9. **Generate** — Gemini Flash receives the chunks as context and generates a grounded answer
-10. **Cite** — Answer includes file path, line range, and direct GitHub link
+# Client terminal
+npm run dev:client
+```
 
-## Known Limitations
+### Running Tests
 
-- Public GitHub repos only (no private repo support)
-- Regex-based chunking may miss complex patterns (no full AST parser)
-- Free-tier rate limits apply (GitHub: 60 req/hr unauthenticated; Gemini: per-minute quota)
-- Max 5,000 chunks per repo; max repo size 50 MB
+Run the backend test suite:
 
-## License
+```bash
+npm test
+```
 
-MIT
+### Production Build
+
+Build both client and server:
+
+```bash
+npm run build
+```
+
+---
+
+## 📁 Project Structure
+
+```text
+AIcodebaseAssistant/
+├── client/                      # React frontend
+│   ├── src/
+│   │   ├── components/          # UI components (ChatBox, MessageBubble, RepoInput, etc.)
+│   │   ├── hooks/               # Custom hooks (useRepo, useQuery)
+│   │   ├── services/            # API client layer
+│   │   └── types/               # Frontend TypeScript interfaces
+│   ├── index.html
+│   └── vite.config.ts
+├── server/                      # Express backend
+│   ├── src/
+│   │   ├── config/              # Environment and DB connection
+│   │   ├── models/              # Mongoose schemas (Repo, Chunk, ChatSession)
+│   │   ├── routes/              # Express API routers (repos, query)
+│   │   ├── services/            # Pipeline services (github, chunker, embedder, retrieval, generation)
+│   │   └── utils/               # Logger, token counters, error handlers
+│   ├── tests/                   # Vitest unit and integration tests
+│   └── tsconfig.json
+├── .env.example                 # Environment variables template
+├── .gitignore                   # Git exclusion rules
+├── package.json                 # Monorepo / workspace helper scripts
+└── README.md                    # Project documentation
+```
+
+---
+
+## 📡 API Endpoints
+
+### Repositories
+
+| Method | Endpoint | Description | Payload / Params |
+| --- | --- | --- | --- |
+| `POST` | `/api/repos` | Submit repository for indexing | `{ "url": "https://github.com/owner/repo" }` |
+| `GET` | `/api/repos/:repoId/status` | Poll repository indexing status & architecture summary | `repoId` URL param |
+
+### Queries & Chat
+
+| Method | Endpoint | Description | Payload / Params |
+| --- | --- | --- | --- |
+| `POST` | `/api/query` | Ask question with RAG retrieval | `{ "repoId": "...", "question": "...", "sessionId": "..." }` |
+| `GET` | `/api/repos/:repoId/sessions/:sessionId` | Retrieve chat session history | `repoId`, `sessionId` URL params |
+
+---
+
+## 🚢 Deployment
+
+- **Backend** can be deployed directly to [Render](https://render.com) or [Railway](https://railway.app):
+  - Root directory: `server`
+  - Build command: `npm install && npm run build`
+  - Start command: `npm start`
+- **Frontend** can be deployed to [Vercel](https://vercel.com) or [Netlify](https://netlify.com):
+  - Root directory: `client`
+  - Build command: `npm run build`
+  - Output directory: `dist`
+  - Environment variable: `VITE_API_URL=https://your-backend-url.onrender.com`
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](LICENSE).

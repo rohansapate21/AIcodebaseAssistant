@@ -103,9 +103,10 @@ router.post('/:repoId/query', async (req: Request, res: Response) => {
 
 // ── GET /api/repos/:repoId/sessions/:sessionId — get session history ──────────
 router.get('/:repoId/sessions/:sessionId', async (req: Request, res: Response) => {
-  const { repoId, sessionId } = req.params;
+  const repoId = req.params.repoId as string;
+  const sessionId = req.params.sessionId as string;
 
-  if (!Types.ObjectId.isValid(repoId) || !Types.ObjectId.isValid(sessionId)) {
+  if (!repoId || !sessionId || !Types.ObjectId.isValid(repoId) || !Types.ObjectId.isValid(sessionId)) {
     res.status(400).json({ error: 'Invalid repoId or sessionId' });
     return;
   }

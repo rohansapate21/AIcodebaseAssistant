@@ -68,8 +68,6 @@ export async function updateChunkEmbedding(hash: string, embedding: number[]): P
   await Chunk.updateOne({ hash }, { $set: { embedding } });
 }
 
-import { Repo, RepoArchitectureSummary } from '../models/Repo';
-
 /**
  * Updates the repo document's status, fileCount, chunkCount, and architectureSummary.
  */

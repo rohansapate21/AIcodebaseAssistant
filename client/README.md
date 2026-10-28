@@ -1,32 +1,46 @@
-# React + TypeScript + Vite
+# AI Codebase Assistant — Web Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A modern, responsive React interface built with TypeScript, Vite, and Tailwind CSS for indexing GitHub repositories and querying them with AI-powered answers and source citations.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- ⚡ **Vite + React 18 + TypeScript** for rapid development and solid type safety
+- 🎨 **Tailwind CSS UI** with dark mode aesthetics, glassmorphism cards, and responsive layout
+- 💬 **Interactive Chat & Query History** with markdown rendering, syntax highlighting, and copy-code actions
+- 📌 **Interactive Source Citations** with file badges, line numbers, and direct GitHub links
+- 📊 **Architecture Overview Card** displaying tech stack badges, key modules, and one-click starter questions
+- 🔄 **Real-Time Indexing Status** with animated progress indicator and polling
 
-## React Compiler
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Install dependencies
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+### 2. Configure environment
+
+Copy `.env.example` to `.env.local` (or configure your environment variables):
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `VITE_API_URL` | Express server URL | `http://localhost:3001` |
+
+### 3. Run Development Server
+
+```bash
+npm run dev
+```
+
+The client will be running at [http://localhost:5173](http://localhost:5173).
+
+### 4. Build for Production
+
+```bash
+npm run build
+```
